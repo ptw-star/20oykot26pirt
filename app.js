@@ -27,8 +27,7 @@ setup() {
     const selectedDate = ref(null);
     const mapQuery = ref('東京');
     const mapMode = ref('normal');
-    // 更新：我的地圖網址
-    const myMapUrl = 'https://www.google.com/maps/d/embed?mid=1BH1Wp-fTNOady5xFfHqKO5MSHP2hNOM&ehbc=2E312F&noprof=1';
+    const myMapUrl = 'https://www.google.com/maps/d/u/0/embed?mid=1mR-HqP7E_1Uu3_YnOqA9mK1j_18';
     const dateRange = ['29/3', '30/3', '31/3', '1/4', '2/4', '3/4', '4/4', '5/4', '6/4', '7/4'];
     const shopCategories = ['3COINS', 'LOFT', '藥妝', '百貨公司', '便利店', '超市', '其他'];
     const shopFilter = ref('all');
@@ -245,7 +244,7 @@ setup() {
     const totalEstTransportPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '交通').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstDiningPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstAttractionsPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-    // 住宿計算
+    // 新增：住宿計算
     const totalEstAccommodationPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
 
     const getPersonStats = (name) => {
@@ -300,7 +299,7 @@ setup() {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const max_size = 800; 
+                    const max_size = 800; // 壓縮限制最大寬度
                     if (width > height) {
                         if (width > max_size) { height *= max_size / width; width = max_size; }
                     } else {
@@ -310,7 +309,7 @@ setup() {
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7); 
+                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7); // 壓縮品質 0.7
                 };
                 img.src = ev.target.result;
             };
