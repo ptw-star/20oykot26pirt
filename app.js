@@ -18,7 +18,7 @@ setup() {
     const calcJpy = ref(0);
     const selectedImageUrl = ref('');
 
-    // 新增：同步鎖定狀態 (對應 index.html 的遮罩)
+    // 新增：同步鎖定狀態
     const isSyncing = ref(false);
 
     // 安全保護機制
@@ -53,11 +53,10 @@ setup() {
         { name: '妃', colorClass: 'bg-[#E9EBE2]' }, { name: '而', colorClass: 'bg-[#EFE2DE]' }
     ];
 
-    // --- 修改：密碼核對功能 (增加錯誤提示) ---
     const checkPassword = () => {
         const pw = prompt("請輸入操作密碼");
-        if (pw === null) return false; // 
-        if (pw === "1234") return true; // 
+        if (pw === null) return false; 
+        if (pw === "1234") return true; 
         alert("密碼錯誤，請重新輸入。");
         return false;
     };
@@ -68,7 +67,6 @@ setup() {
         nextTick(lucide.createIcons);
     };
 
-    // 計算總項目數 (保護機制)
     const getTotalItemCount = () => {
         const scheduleCount = Object.values(scheduleData.value).flat().length;
         return scheduleCount + shoppingList.value.length + expenseList.value.length;
@@ -121,76 +119,50 @@ setup() {
         loadingWeather.value = false;
     };
 
-    // --- 修改：GitHub 同步 (加入安全保護與同步鎖定) ---
+    // --- GitHub 同步 ---
     const syncToGitHub = async (isAuto = false) => {
         const currentCount = getTotalItemCount();
-
-        // 安全護欄
         if (isAuto) {
-            if (currentCount === 0 && initialLoadedCount.value > 0) {
-                console.warn("偵測到資料為空白，取消自動同步。");
-                return;
-            }
+            if (currentCount === 0 && initialLoadedCount.value > 0) return;
             if (initialLoadedCount.value - currentCount >= 5) {
-                alert("⚠️ 暫停自動同步：偵測到大量資料被移除(超過5個項目)。\n\n如需同步請使用手動上傳。");
+                alert("⚠️ 暫停自動同步：偵測到大量資料被移除。\n\n如需同步請使用手動上傳。");
                 return;
             }
         }
-
         if (!githubConfig.value.token || !githubConfig.value.owner || !githubConfig.value.repo) return;
-
-        // 開啟同步鎖定
         isSyncing.value = true;
-
         const url = `https://api.github.com/repos/${githubConfig.value.owner}/${githubConfig.value.repo}/contents/data.json`;
-        
         try {
-            // 1. 先抓取最新 SHA，防止因快速重複新增造成的版本衝突
-            const getRes = await fetch(url, { 
-                headers: { Authorization: `token ${githubConfig.value.token}` },
-                cache: 'no-store' 
-            });
-            
+            const getRes = await fetch(url, { headers: { Authorization: `token ${githubConfig.value.token}` }, cache: 'no-store' });
             let sha = '';
             if (getRes.ok) {
                 const fileData = await getRes.json();
                 sha = fileData.sha;
             }
-
-            // 2. 準備內容
             const content = btoa(unescape(encodeURIComponent(JSON.stringify({ 
                 schedule: scheduleData.value, 
                 shopping: shoppingList.value, 
                 expenses: expenseList.value, 
                 rates: exchangeRates.value 
             }))));
-
-            // 3. 上傳更新
             const putRes = await fetch(url, { 
                 method: 'PUT', 
                 headers: { Authorization: `token ${githubConfig.value.token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: 'sync', content, sha: sha || undefined }) 
             });
-
             if (putRes.ok) {
                 if (!isAuto) alert('🚀 同步成功！');
-                initialLoadedCount.value = currentCount; // 更新基準線
+                initialLoadedCount.value = currentCount;
             } else {
                 const err = await putRes.json();
                 alert("上傳失敗: " + err.message);
             }
-        } catch (e) { 
-            console.error(e);
-            alert("網路連線錯誤，無法完成同步。");
-        } finally {
-            // 關閉同步鎖定
-            isSyncing.value = false;
-        }
+        } catch (e) { alert("網路連線錯誤。"); } finally { isSyncing.value = false; }
     };
 
     const fetchFromGitHub = async () => {
         if (!githubConfig.value.token) return;
-        isSyncing.value = true; // 下載期間也鎖定
+        isSyncing.value = true;
         const url = `https://api.github.com/repos/${githubConfig.value.owner}/${githubConfig.value.repo}/contents/data.json`;
         try {
             const res = await fetch(url, { headers: { Authorization: `token ${githubConfig.value.token}` }, cache: 'no-store' });
@@ -201,7 +173,6 @@ setup() {
                 shoppingList.value = data.shopping || []; 
                 expenseList.value = data.expenses || [];
                 if (data.rates) exchangeRates.value = data.rates;
-                
                 nextTick(() => { initialLoadedCount.value = getTotalItemCount(); });
             }
         } catch (e) { console.error(e); }
@@ -210,7 +181,7 @@ setup() {
 
     const saveToGitHubAuto = () => syncToGitHub(true);
 
-    // --- 各功能邏輯 ---
+    // --- 行程功能 ---
     const addScheduleItem = () => {
         if (!newScheduleItem.value.title) return;
         const date = newScheduleItem.value.date;
@@ -233,6 +204,7 @@ setup() {
     const cancelEditSchedule = () => { editingScheduleId.value = null; newScheduleItem.value = { date: '29/3', time: '09:00', title: '', category: '', estPersonal: null, estShared: null, address: '', desc: '' }; showAddSchedule.value = false; };
     const deleteScheduleItem = (d, i) => { if(checkPassword()) { scheduleData.value[d].splice(i, 1); saveToGitHubAuto(); } };
     
+    // --- 購物功能 ---
     const addShopItem = () => {
         if (!newShopItem.value.name) return;
         if (editingShopId.value) {
@@ -250,6 +222,7 @@ setup() {
     const cancelEditShop = () => { editingShopId.value = null; newShopItem.value = { name: '', store: '', category: '其他', image: null }; showAddShopItem.value = false; };
     const deleteShopItem = (id) => { if(checkPassword()) { shoppingList.value = shoppingList.value.filter(s => s.id !== id); saveToGitHubAuto(); } };
     
+    // --- 支出功能 ---
     const addExpense = () => {
         if (!newExpense.value.title || !newExpense.value.amount) return;
         if (editingExpenseId.value) {
@@ -267,9 +240,12 @@ setup() {
     const editExpense = (i) => { newExpense.value = { ...i }; editingExpenseId.value = i.id; showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); };
     const deleteExpense = (id) => { if(checkPassword()) { expenseList.value = expenseList.value.filter(e => e.id !== id); saveToGitHubAuto(); } };
 
+    // --- 計算屬性 ---
     const totalEstTransportPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '交通').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstDiningPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstAttractionsPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
+    // 新增：住宿計算
+    const totalEstAccommodationPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
 
     const getPersonStats = (name) => {
         let stats = { cashSpent: 0, creditSpent: 0, debitSpent: 0, cashBalance: 0, totalSpent: 0 };
@@ -291,12 +267,12 @@ setup() {
         currentTab, showSettings, showAddSchedule, showAddShopItem, showAddExpense, selectedDate, dateRange, shopCategories, shopFilter, githubConfig,
         newScheduleItem, editingScheduleId, newShopItem, editingShopId, newExpense, editingExpenseId, peopleConfigs,
         showWeatherModal, showCalcModal, showImageModal, selectedImageUrl, previewImage, loadingWeather, weatherData, calcExpression, calcJpy, exchangeRates, openWeather,
-        isSyncing, // 返回給 index 使用
+        isSyncing,
         calcAppend, calcClear, calcBackspace, calcResult,
         activeTabTitle: computed(() => tabs.find(t => t.id === currentTab.value)?.name),
         mapSrc: computed(() => mapMode.value === 'mymap' ? myMapUrl : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery.value)}&output=embed`),
         tabs, sortedShoppingList: computed(() => { let list = [...shoppingList.value]; if (shopFilter.value !== 'all') list = list.filter(i => i.category === shopFilter.value); return list.sort((a, b) => (a.done !== b.done) ? (a.done ? 1 : -1) : a.id - b.id); }),
-        totalEstTransportPersonal, totalEstDiningPersonal, totalEstAttractionsPersonal,
+        totalEstTransportPersonal, totalEstDiningPersonal, totalEstAttractionsPersonal, totalEstAccommodationPersonal,
         toggleAddSchedule: () => { if(showAddSchedule.value) cancelEditSchedule(); else { showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddShop: () => { if(showAddShopItem.value) cancelEditShop(); else { showAddShopItem.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddExpense: () => { if(showAddExpense.value) cancelEditExpense(); else { showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
@@ -306,7 +282,7 @@ setup() {
         getPersonStats, getDayPersonTotal, getExpensesByDate: (date) => expenseList.value.filter(i => i.date === date), getPersonDayMethod,
         getPersonColor: (n) => ({ '公數': '#91A0A5', '妃': '#8E9775', '爸媽': '#A79A89', '而': '#B77F70' }[n] || '#999'),
         getPersonBg: (n) => ({ '公數': 'bg-[#E6EAEB]', '爸媽': 'bg-[#ECE9E4]', '妃': 'bg-[#E9EBE2]', '而': 'bg-[#EFE2DE]' }[n] || 'bg-gray-100'),
-        getCatStyle: (c) => ({ '交通': 'bg-[#91A0A5]', '景點': 'bg-[#8E9775]', '飲食': 'bg-[#B77F70]', '購物': 'bg-[#A79A89]' }[c] || 'bg-gray-500'),
+        getCatStyle: (c) => ({ '交通': 'bg-[#91A0A5]', '景點': 'bg-[#8E9775]', '飲食': 'bg-[#B77F70]', '購物': 'bg-[#A79A89]', '住宿': 'bg-[#607D8B]' }[c] || 'bg-gray-500'),
         jumpToMap: (t) => { mapQuery.value = t; mapMode.value = 'normal'; currentTab.value = 'map'; },
         searchMap: (q) => { mapMode.value = 'normal'; mapQuery.value = q; },
         openMyMap: () => mapMode.value = 'mymap',
@@ -314,10 +290,30 @@ setup() {
         addShopItem, editShopItem, cancelEditShop, deleteShopItem,
         addExpense, cancelEditExpense, editExpense, deleteExpense,
         fetchFromGitHub, syncToGitHub, handleImageUpload: (e) => {
-            if (!e.target.files[0]) return;
+            const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => { newShopItem.value.image = ev.target.result; };
-            reader.readAsDataURL(e.target.files[0]);
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const max_size = 800; // 壓縮限制最大寬度
+                    if (width > height) {
+                        if (width > max_size) { height *= max_size / width; width = max_size; }
+                    } else {
+                        if (height > max_size) { width *= max_size / height; height = max_size; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7); // 壓縮品質 0.7
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
         }
     };
 }
