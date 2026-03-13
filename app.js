@@ -8,7 +8,6 @@ setup() {
     const showAddShopItem = ref(false);
     const showAddExpense = ref(false);
     
-    // 彈窗狀態
     const showWeatherModal = ref(false);
     const showCalcModal = ref(false);
     const showImageModal = ref(false); 
@@ -18,17 +17,16 @@ setup() {
     const calcJpy = ref(0);
     const selectedImageUrl = ref('');
 
-    // 新增：同步鎖定狀態
     const isSyncing = ref(false);
-
-    // 安全保護機制
     const initialLoadedCount = ref(0);
 
     const selectedDate = ref(null);
     const mapQuery = ref('東京');
     const mapMode = ref('normal');
-    // 更新：我的地圖網址
+    
+    // 更新後的「我的地圖」連結
     const myMapUrl = 'https://www.google.com/maps/d/embed?mid=1BH1Wp-fTNOady5xFfHqKO5MSHP2hNOM&ehbc=2E312F&noprof=1';
+    
     const dateRange = ['29/3', '30/3', '31/3', '1/4', '2/4', '3/4', '4/4', '5/4', '6/4', '7/4'];
     const shopCategories = ['3COINS', 'LOFT', '藥妝', '百貨公司', '便利店', '超市', '其他'];
     const shopFilter = ref('all');
@@ -56,9 +54,8 @@ setup() {
 
     const checkPassword = () => {
         const pw = prompt("請輸入操作密碼");
-        if (pw === null) return false; 
         if (pw === "1234") return true; 
-        alert("密碼錯誤，請重新輸入。");
+        alert("密碼錯誤。");
         return false;
     };
 
@@ -98,8 +95,6 @@ setup() {
         if (code <= 3) return '🌤️';
         if (code <= 48) return '☁️';
         if (code <= 67) return '🌧️';
-        if (code <= 77) return '❄️';
-        if (code <= 99) return '⛈️';
         return '🌡️';
     };
     const openWeather = async () => {
@@ -116,49 +111,24 @@ setup() {
                 tempMin: Math.round(data.daily.temperature_2m_min[i]),
                 icon: getWeatherIcon(data.daily.weather_code[i])
             })).slice(0, 5);
-        } catch (e) { console.error("天氣失敗", e); }
+        } catch (e) { console.error(e); }
         loadingWeather.value = false;
     };
 
     // --- GitHub 同步 ---
     const syncToGitHub = async (isAuto = false) => {
         const currentCount = getTotalItemCount();
-        if (isAuto) {
-            if (currentCount === 0 && initialLoadedCount.value > 0) return;
-            if (initialLoadedCount.value - currentCount >= 5) {
-                alert("⚠️ 暫停自動同步：偵測到大量資料被移除。\n\n如需同步請使用手動上傳。");
-                return;
-            }
-        }
+        if (isAuto && initialLoadedCount.value > 0 && initialLoadedCount.value - currentCount >= 5) return;
         if (!githubConfig.value.token || !githubConfig.value.owner || !githubConfig.value.repo) return;
         isSyncing.value = true;
         const url = `https://api.github.com/repos/${githubConfig.value.owner}/${githubConfig.value.repo}/contents/data.json`;
         try {
             const getRes = await fetch(url, { headers: { Authorization: `token ${githubConfig.value.token}` }, cache: 'no-store' });
-            let sha = '';
-            if (getRes.ok) {
-                const fileData = await getRes.json();
-                sha = fileData.sha;
-            }
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify({ 
-                schedule: scheduleData.value, 
-                shopping: shoppingList.value, 
-                expenses: expenseList.value, 
-                rates: exchangeRates.value 
-            }))));
-            const putRes = await fetch(url, { 
-                method: 'PUT', 
-                headers: { Authorization: `token ${githubConfig.value.token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: 'sync', content, sha: sha || undefined }) 
-            });
-            if (putRes.ok) {
-                if (!isAuto) alert('🚀 同步成功！');
-                initialLoadedCount.value = currentCount;
-            } else {
-                const err = await putRes.json();
-                alert("上傳失敗: " + err.message);
-            }
-        } catch (e) { alert("網路連線錯誤。"); } finally { isSyncing.value = false; }
+            let sha = getRes.ok ? (await getRes.json()).sha : '';
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify({ schedule: scheduleData.value, shopping: shoppingList.value, expenses: expenseList.value, rates: exchangeRates.value }))));
+            const putRes = await fetch(url, { method: 'PUT', headers: { Authorization: `token ${githubConfig.value.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'sync', content, sha: sha || undefined }) });
+            if (putRes.ok && !isAuto) alert('🚀 同步成功！');
+        } catch (e) { console.error(e); } finally { isSyncing.value = false; }
     };
 
     const fetchFromGitHub = async () => {
@@ -182,7 +152,7 @@ setup() {
 
     const saveToGitHubAuto = () => syncToGitHub(true);
 
-    // --- 行程功能 ---
+    // --- 各項操作 (Schedule, Shopping, Expense) ---
     const addScheduleItem = () => {
         if (!newScheduleItem.value.title) return;
         const date = newScheduleItem.value.date;
@@ -197,15 +167,9 @@ setup() {
         }
         scheduleData.value[date].sort((a, b) => a.time.localeCompare(b.time));
         newScheduleItem.value = { date: '29/3', time: '09:00', title: '', category: '', estPersonal: null, estShared: null, address: '', desc: '' };
-        showAddSchedule.value = false; 
-        saveToGitHubAuto(); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showAddSchedule.value = false; saveToGitHubAuto(); 
     };
-    const editScheduleItem = (item, date) => { newScheduleItem.value = { ...item, date }; editingScheduleId.value = item.id; showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); };
-    const cancelEditSchedule = () => { editingScheduleId.value = null; newScheduleItem.value = { date: '29/3', time: '09:00', title: '', category: '', estPersonal: null, estShared: null, address: '', desc: '' }; showAddSchedule.value = false; };
-    const deleteScheduleItem = (d, i) => { if(checkPassword()) { scheduleData.value[d].splice(i, 1); saveToGitHubAuto(); } };
-    
-    // --- 購物功能 ---
+
     const addShopItem = () => {
         if (!newShopItem.value.name) return;
         if (editingShopId.value) {
@@ -215,15 +179,9 @@ setup() {
             editingShopId.value = null;
         } else { shoppingList.value.push({ ...newShopItem.value, id: Date.now(), done: false }); }
         newShopItem.value = { name: '', store: '', category: '其他', image: null };
-        showAddShopItem.value = false; 
-        saveToGitHubAuto(); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showAddShopItem.value = false; saveToGitHubAuto();
     };
-    const editShopItem = (item) => { newShopItem.value = { ...item }; editingShopId.value = item.id; showAddShopItem.value = true; nextTick(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); lucide.createIcons(); }); };
-    const cancelEditShop = () => { editingShopId.value = null; newShopItem.value = { name: '', store: '', category: '其他', image: null }; showAddShopItem.value = false; };
-    const deleteShopItem = (id) => { if(checkPassword()) { shoppingList.value = shoppingList.value.filter(s => s.id !== id); saveToGitHubAuto(); } };
-    
-    // --- 支出功能 ---
+
     const addExpense = () => {
         if (!newExpense.value.title || !newExpense.value.amount) return;
         if (editingExpenseId.value) {
@@ -233,30 +191,8 @@ setup() {
             editingExpenseId.value = null;
         } else { expenseList.value.push({ ...newExpense.value, id: Date.now() }); }
         newExpense.value = { type: 'expense', date: '29/3', person: '公數', method: '現金', title: '', amount: null };
-        showAddExpense.value = false; 
-        saveToGitHubAuto(); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showAddExpense.value = false; saveToGitHubAuto();
     };
-    const cancelEditExpense = () => { editingExpenseId.value = null; newExpense.value = { type: 'expense', date: '29/3', person: '公數', method: '現金', title: '', amount: null }; showAddExpense.value = false; };
-    const editExpense = (i) => { newExpense.value = { ...i }; editingExpenseId.value = i.id; showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); };
-    const deleteExpense = (id) => { if(checkPassword()) { expenseList.value = expenseList.value.filter(e => e.id !== id); saveToGitHubAuto(); } };
-
-    // --- 計算屬性 ---
-    const totalEstTransportPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '交通').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-    const totalEstDiningPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-    const totalEstAttractionsPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-    // 住宿計算
-    const totalEstAccommodationPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-
-    const getPersonStats = (name) => {
-        let stats = { cashSpent: 0, creditSpent: 0, debitSpent: 0, cashBalance: 0, totalSpent: 0 };
-        expenseList.value.forEach(item => { if (item.person === name) { const amt = Number(item.amount); if (item.type === 'expense') { stats.totalSpent += amt; if (item.method === '現金') { stats.cashSpent += amt; stats.cashBalance -= amt; } else if (item.method === '信用卡') { stats.creditSpent += amt; } else if (item.method === '扣賬卡') { stats.debitSpent += amt; } } else if (item.method === '現金') stats.cashBalance += amt; } });
-        return stats;
-    };
-    const getPersonDayMethod = (date, person, method) => expenseList.value.filter(i => i.date === date && i.person === person && i.method === method && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0);
-    const getDayPersonTotal = (date, person) => expenseList.value.filter(i => i.date === date && i.person === person && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0);
-
-    const tabs = [{ id: 'schedule', name: '行程', icon: 'calendar' }, { id: 'map', name: '地圖', icon: 'map' }, { id: 'shopping', name: '清單', icon: 'shopping-bag' }, { id: 'expense', name: '支出', icon: 'banknote' }];
 
     onMounted(async () => { await fetchFromGitHub(); lucide.createIcons(); });
     watch(currentTab, () => { nextTick(lucide.createIcons); selectedDate.value = null; });
@@ -271,12 +207,16 @@ setup() {
         isSyncing,
         calcAppend, calcClear, calcBackspace, calcResult,
         activeTabTitle: computed(() => tabs.find(t => t.id === currentTab.value)?.name),
+        // 地圖源邏輯
         mapSrc: computed(() => mapMode.value === 'mymap' ? myMapUrl : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery.value)}&output=embed`),
         tabs, sortedShoppingList: computed(() => { let list = [...shoppingList.value]; if (shopFilter.value !== 'all') list = list.filter(i => i.category === shopFilter.value); return list.sort((a, b) => (a.done !== b.done) ? (a.done ? 1 : -1) : a.id - b.id); }),
-        totalEstTransportPersonal, totalEstDiningPersonal, totalEstAttractionsPersonal, totalEstAccommodationPersonal,
-        toggleAddSchedule: () => { if(showAddSchedule.value) cancelEditSchedule(); else { showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
-        toggleAddShop: () => { if(showAddShopItem.value) cancelEditShop(); else { showAddShopItem.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
-        toggleAddExpense: () => { if(showAddExpense.value) cancelEditExpense(); else { showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
+        totalEstTransportPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '交通').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
+        totalEstDiningPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
+        totalEstAttractionsPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
+        totalEstAccommodationPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
+        toggleAddSchedule: () => { if(showAddSchedule.value) { editingScheduleId.value = null; showAddSchedule.value = false; } else { showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
+        toggleAddShop: () => { if(showAddShopItem.value) { editingShopId.value = null; showAddShopItem.value = false; } else { showAddShopItem.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
+        toggleAddExpense: () => { if(showAddExpense.value) { editingExpenseId.value = null; showAddExpense.value = false; } else { showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
         getScheduleByDate: (d) => scheduleData.value[d] || [],
         getDayTotal: (d) => expenseList.value.filter(i => i.date === d && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0),
@@ -286,11 +226,12 @@ setup() {
         getCatStyle: (c) => ({ '交通': 'bg-[#91A0A5]', '景點': 'bg-[#8E9775]', '飲食': 'bg-[#B77F70]', '購物': 'bg-[#A79A89]', '住宿': 'bg-[#607D8B]' }[c] || 'bg-gray-500'),
         jumpToMap: (t) => { mapQuery.value = t; mapMode.value = 'normal'; currentTab.value = 'map'; },
         searchMap: (q) => { mapMode.value = 'normal'; mapQuery.value = q; },
-        openMyMap: () => mapMode.value = 'mymap',
-        addScheduleItem, deleteScheduleItem, editScheduleItem, cancelEditSchedule,
-        addShopItem, editShopItem, cancelEditShop, deleteShopItem,
-        addExpense, cancelEditExpense, editExpense, deleteExpense,
-        fetchFromGitHub, syncToGitHub, handleImageUpload: (e) => {
+        openMyMap: () => mapMode.value = 'mymap', // 切換模式
+        addScheduleItem, editScheduleItem, cancelEditSchedule: () => { editingScheduleId.value = null; showAddSchedule.value = false; },
+        deleteScheduleItem, addShopItem, editShopItem, cancelEditShop: () => { editingShopId.value = null; showAddShopItem.value = false; },
+        deleteShopItem, addExpense, editExpense, cancelEditExpense: () => { editingExpenseId.value = null; showAddExpense.value = false; },
+        deleteExpense, fetchFromGitHub, syncToGitHub,
+        handleImageUpload: (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -298,19 +239,13 @@ setup() {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const max_size = 800; 
-                    if (width > height) {
-                        if (width > max_size) { height *= max_size / width; width = max_size; }
-                    } else {
-                        if (height > max_size) { width *= max_size / height; height = max_size; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7); 
+                    let width = img.width, height = img.height;
+                    const max_size = 800;
+                    if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } }
+                    else { if (height > max_size) { width *= max_size / height; height = max_size; } }
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7);
                 };
                 img.src = ev.target.result;
             };
