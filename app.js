@@ -18,7 +18,7 @@ setup() {
     const calcJpy = ref(0);
     const selectedImageUrl = ref('');
 
-    // 新增：同步鎖定狀態
+    // 同步鎖定狀態
     const isSyncing = ref(false);
 
     // 安全保護機制
@@ -53,7 +53,7 @@ setup() {
         { name: '妃', colorClass: 'bg-[#E9EBE2]' }, { name: '而', colorClass: 'bg-[#EFE2DE]' }
     ];
 
-    // 新增：根據日期索引獲取主題色 (梅花間竹)
+    // --- 新增：梅花間竹顏色邏輯 ---
     const getDateTheme = (date) => {
         const idx = dateRange.indexOf(date);
         const cycle = idx % 3;
@@ -284,7 +284,8 @@ setup() {
         toggleAddSchedule: () => { if(showAddSchedule.value) cancelEditSchedule(); else { showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddShop: () => { if(showAddShopItem.value) cancelEditShop(); else { showAddShopItem.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddExpense: () => { if(showAddExpense.value) cancelEditExpense(); else { showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
-        scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); const el = document.getElementById(id); if(el) window.scrollTo({ top: el.offsetTop - 110, behavior: 'smooth' }); },
+        // --- 修正 scrollToDate 的位移 ---
+        scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); const el = document.getElementById(id); if(el) window.scrollTo({ top: el.offsetTop - 130, behavior: 'smooth' }); },
         getScheduleByDate: (d) => scheduleData.value[d] || [],
         getDayTotal: (d) => expenseList.value.filter(i => i.date === d && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0),
         getPersonStats, getDayPersonTotal, getExpensesByDate: (date) => expenseList.value.filter(i => i.date === date), getPersonDayMethod,
@@ -297,7 +298,7 @@ setup() {
         addScheduleItem, deleteScheduleItem, editScheduleItem, cancelEditSchedule,
         addShopItem, editShopItem, cancelEditShop, deleteShopItem,
         addExpense, cancelEditExpense, editExpense, deleteExpense,
-        fetchFromGitHub, syncToGitHub, getDateTheme, // 確保回傳 getDateTheme
+        fetchFromGitHub, syncToGitHub, getDateTheme, // 加入 getDateTheme 到回傳物件
         handleImageUpload: (e) => {
             const file = e.target.files[0];
             if (!file) return;
