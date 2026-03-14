@@ -53,6 +53,15 @@ setup() {
         { name: '妃', colorClass: 'bg-[#E9EBE2]' }, { name: '而', colorClass: 'bg-[#EFE2DE]' }
     ];
 
+    // 新增：根據日期索引獲取主題色 (梅花間竹)
+    const getDateTheme = (date) => {
+        const idx = dateRange.indexOf(date);
+        const cycle = idx % 3;
+        if (cycle === 0) return { shadow: 'shadow-[#91A0A5]', text: 'text-[#91A0A5]', bg: 'bg-[#91A0A5]', lightBg: 'bg-[#F0F4F5]' }; // 藍灰
+        if (cycle === 1) return { shadow: 'shadow-[#B77F70]', text: 'text-[#B77F70]', bg: 'bg-[#B77F70]', lightBg: 'bg-[#F5F0EE]' }; // 磚紅
+        return { shadow: 'shadow-[#8E9775]', text: 'text-[#8E9775]', bg: 'bg-[#8E9775]', lightBg: 'bg-[#F1F2ED]' }; // 橄欖綠
+    };
+
     const checkPassword = () => {
         const pw = prompt("請輸入操作密碼");
         if (pw === null) return false; 
@@ -244,7 +253,6 @@ setup() {
     const totalEstTransportPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '交通').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstDiningPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
     const totalEstAttractionsPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
-    // 新增：住宿計算
     const totalEstAccommodationPersonal = computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0));
 
     const getPersonStats = (name) => {
@@ -276,7 +284,7 @@ setup() {
         toggleAddSchedule: () => { if(showAddSchedule.value) cancelEditSchedule(); else { showAddSchedule.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddShop: () => { if(showAddShopItem.value) cancelEditShop(); else { showAddShopItem.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
         toggleAddExpense: () => { if(showAddExpense.value) cancelEditExpense(); else { showAddExpense.value = true; nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' })); } },
-        scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+        scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); const el = document.getElementById(id); if(el) window.scrollTo({ top: el.offsetTop - 110, behavior: 'smooth' }); },
         getScheduleByDate: (d) => scheduleData.value[d] || [],
         getDayTotal: (d) => expenseList.value.filter(i => i.date === d && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0),
         getPersonStats, getDayPersonTotal, getExpensesByDate: (date) => expenseList.value.filter(i => i.date === date), getPersonDayMethod,
@@ -289,7 +297,8 @@ setup() {
         addScheduleItem, deleteScheduleItem, editScheduleItem, cancelEditSchedule,
         addShopItem, editShopItem, cancelEditShop, deleteShopItem,
         addExpense, cancelEditExpense, editExpense, deleteExpense,
-        fetchFromGitHub, syncToGitHub, handleImageUpload: (e) => {
+        fetchFromGitHub, syncToGitHub, getDateTheme, // 確保回傳 getDateTheme
+        handleImageUpload: (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -299,17 +308,13 @@ setup() {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const max_size = 800; // 壓縮限制最大寬度
-                    if (width > height) {
-                        if (width > max_size) { height *= max_size / width; width = max_size; }
-                    } else {
-                        if (height > max_size) { width *= max_size / height; height = max_size; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
+                    const max_size = 800;
+                    if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } } 
+                    else { if (height > max_size) { width *= max_size / height; height = max_size; } }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7); // 壓縮品質 0.7
+                    newShopItem.value.image = canvas.toDataURL('image/jpeg', 0.7);
                 };
                 img.src = ev.target.result;
             };
