@@ -26,8 +26,9 @@ setup() {
     const dateRange = ['29/3', '30/3', '31/3', '1/4', '2/4', '3/4', '4/4', '5/4', '6/4', '7/4'];
     const shopCategories = ['3COINS', 'LOFT', '藥妝', '百貨公司', '便利店', '超市', '其他'];
     const shopFilter = ref('all');
-    const githubConfig = ref(JSON.parse(localStorage.getItem('github_config')) || { owner: '', repo: '', token: '' });
     
+    // 初始化時從 localStorage 讀取
+    const githubConfig = ref(JSON.parse(localStorage.getItem('github_config')) || { owner: '', repo: '', token: '' });
     const exchangeRates = ref(JSON.parse(localStorage.getItem('exchange_rates')) || {
         baMa: 0.052, fei: 0.052, yi: 0.052
     });
@@ -229,6 +230,17 @@ setup() {
 
     onMounted(async () => { await fetchFromGitHub(); lucide.createIcons(); });
     watch(currentTab, () => { nextTick(lucide.createIcons); selectedDate.value = null; });
+
+    // --- 關鍵修改：增加對 githubConfig 和 exchangeRates 的監聽並寫入 LocalStorage ---
+    watch(githubConfig, (newVal) => {
+        localStorage.setItem('github_config', JSON.stringify(newVal));
+    }, { deep: true });
+
+    watch(exchangeRates, (newVal) => {
+        localStorage.setItem('exchange_rates', JSON.stringify(newVal));
+    }, { deep: true });
+    // -----------------------------------------------------------------------
+
     watch([showSettings, showAddSchedule, showAddShopItem, showAddExpense, showWeatherModal, showCalcModal, showImageModal, scheduleData, shoppingList, expenseList], () => nextTick(lucide.createIcons), { deep: true });
 
     return {
