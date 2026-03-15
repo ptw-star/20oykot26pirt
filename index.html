@@ -206,9 +206,9 @@
                 <div class="relative">
                     <input v-model.number="newExpense.amount" type="number" placeholder="金額 ¥" class="input-field font-bold text-gray-700">
                     <div v-if="newExpense.amount > 0" class="mt-1 px-1 flex flex-wrap gap-x-3 gap-y-1">
-                        <span class="text-[10px] text-accent font-bold">爸媽 ${{(newExpense.amount * exchangeRates.baMa).toFixed(1)}}</span>
-                        <span class="text-[10px] text-sage font-bold">妃 ${{(newExpense.amount * exchangeRates.fei).toFixed(1)}}</span>
-                        <span class="text-[10px] text-secondary font-bold">而 ${{(newExpense.amount * exchangeRates.yi).toFixed(1)}}</span>
+                        <span class="text-[10px] text-accent font-bold">爸媽 ${{(newExpense.amount * exchangeRates.baMa).toFixed(2)}}</span>
+                        <span class="text-[10px] text-sage font-bold">妃 ${{(newExpense.amount * exchangeRates.fei).toFixed(2)}}</span>
+                        <span class="text-[10px] text-secondary font-bold">而 ${{(newExpense.amount * exchangeRates.yi).toFixed(2)}}</span>
                     </div>
                 </div>
                 <button @click="addExpense" class="w-full bg-secondary text-white py-3 rounded-xl font-bold">{{ editingExpenseId ? '更新支出' : '新增支出' }}</button>
@@ -295,9 +295,9 @@
                     <div class="text-3xl font-black text-primary truncate">¥ {{ calcJpy }}</div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-[#ECE9E4]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">爸媽</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.baMa).toFixed(1)}}</div></div>
-                    <div class="bg-[#E9EBE2]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">妃</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.fei).toFixed(1)}}</div></div>
-                    <div class="bg-[#EFE2DE]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">而</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.yi).toFixed(1)}}</div></div>
+                    <div class="bg-[#ECE9E4]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">爸媽</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.baMa).toFixed(2)}}</div></div>
+                    <div class="bg-[#E9EBE2]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">妃</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.fei).toFixed(2)}}</div></div>
+                    <div class="bg-[#EFE2DE]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">而</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.yi).toFixed(2)}}</div></div>
                 </div>
                 <div class="grid grid-cols-4 gap-2">
                     <button v-for="b in ['C','/','*','del','7','8','9','-','4','5','6','+','1','2','3','=','0','.']" @click="b==='C'?calcClear():b==='del'?calcBackspace():b==='='?calcResult():calcAppend(b)" :class="{'bg-red-50 text-red-400':b==='C','bg-primary text-white row-span-2':b==='=','col-span-2':b==='0'}" class="bg-gray-50 font-bold p-4 rounded-2xl active:scale-95 flex items-center justify-center">
