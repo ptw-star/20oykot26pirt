@@ -81,7 +81,7 @@
 
             <div v-for="date in dateRange" :key="date" :id="'date-' + date.replace('/', '-')" class="pt-2">
                 <!-- 1. 吸頂標題 -->
-                <div class="sticky top-[125px] z-30 flex items-center mb-4 bg-bg/95 backdrop-blur-sm py-1">
+                <div class="sticky top-[128px] z-30 flex items-center mb-4 bg-bg/95 backdrop-blur-sm py-1">
                     <div :class="getDateTheme(date).bg" class="text-white px-4 py-1 rounded-full text-xs font-bold shadow-sm">{{ date }}</div>
                     <div class="flex-1 h-[1px] bg-gray-200 ml-3"></div>
                 </div>
@@ -144,17 +144,11 @@
                 <button @click="searchMap('景點')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-2 shadow-sm active:bg-gray-50"><i data-lucide="camera" class="text-secondary"></i><span class="font-bold text-sm">睇景點</span></button>
             </div>
             <div class="grid grid-cols-3 gap-3">
-                <button @click="searchMap('東京都豊島区池袋2-20-1')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-2 shadow-sm active:bg-gray-50">
-                    <i data-lucide="home" class="text-[#607D8B]"></i>
-                    <span class="font-bold text-[10px] truncate w-full text-center">池袋之家</span>
+                <button @click="searchMap('東京都豊島区池袋2-20-1')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="bed" class="w-4 h-4 class="text-[#607D8B]"></i><span class="font-bold text-[10px] truncate w-full text-center">池袋之家</span>
                 </button>
-                <button @click="searchMap('山梨県南都留郡富士河口湖町浅川10')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-2 shadow-sm active:bg-gray-50">
-                    <i data-lucide="home" class="text-[#607D8B]"></i>
-                    <span class="font-bold text-[10px] truncate w-full text-center">富士山Ubuya</span>
+                <button @click="searchMap('山梨県南都留郡富士河口湖町浅川10')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="home" class="w-4 h-4 class="text-[#607D8B]"></i><span class="font-bold text-[10px] truncate w-full text-center">富士山Ubuya</span>
                 </button>
-                <button @click="searchMap('東京都豊島区南池袋1-20-8')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-2 shadow-sm active:bg-gray-50">
-                    <i data-lucide="home" class="text-[#607D8B]"></i>
-                    <span class="font-bold text-[10px] truncate w-full text-center">Del池袋東口</span>
+                <button @click="searchMap('東京都豊島区南池袋1-20-8')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="building-2" class="w-4 h-4 class="text-[#607D8B]"></i><span class="font-bold text-[10px] truncate w-full text-center">Del池袋東口</span>
                 </button>
             </div>
         </section>
@@ -208,7 +202,7 @@
                     <div v-if="newExpense.amount > 0" class="mt-1 px-1 flex flex-wrap gap-x-3 gap-y-1">
                         <span class="text-[10px] text-accent font-bold">爸媽 ${{(newExpense.amount * exchangeRates.baMa).toFixed(2)}}</span>
                         <span class="text-[10px] text-sage font-bold">妃 ${{(newExpense.amount * exchangeRates.fei).toFixed(2)}}</span>
-                        <span class="text-[10px] text-secondary font-bold">而 ${{(newExpense.amount * exchangeRates.yi).toFixed(2)}}</span>
+                        <span class="text-[10px] text-secondary font-bold">而 ${{(newExpense.amount * exchangeRates.yee).toFixed(2)}}</span>
                     </div>
                 </div>
                 <button @click="addExpense" class="w-full bg-secondary text-white py-3 rounded-xl font-bold">{{ editingExpenseId ? '更新支出' : '新增支出' }}</button>
@@ -297,7 +291,7 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="bg-[#ECE9E4]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">爸媽</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.baMa).toFixed(2)}}</div></div>
                     <div class="bg-[#E9EBE2]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">妃</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.fei).toFixed(2)}}</div></div>
-                    <div class="bg-[#EFE2DE]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">而</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.yi).toFixed(2)}}</div></div>
+                    <div class="bg-[#EFE2DE]/60 p-2 rounded-2xl text-center"><div class="text-[9px] font-bold text-gray-400">而</div><div class="text-sm font-black text-gray-700">${{(calcJpy * exchangeRates.yee).toFixed(2)}}</div></div>
                 </div>
                 <div class="grid grid-cols-4 gap-2">
                     <button v-for="b in ['C','/','*','del','7','8','9','-','4','5','6','+','1','2','3','=','0','.']" @click="b==='C'?calcClear():b==='del'?calcBackspace():b==='='?calcResult():calcAppend(b)" :class="{'bg-red-50 text-red-400':b==='C','bg-primary text-white row-span-2':b==='=','col-span-2':b==='0'}" class="bg-gray-50 font-bold p-4 rounded-2xl active:scale-95 flex items-center justify-center">
@@ -332,7 +326,7 @@
                     <div class="grid grid-cols-3 gap-2">
                         <input v-model.number="exchangeRates.baMa" type="number" step="0.0001" class="input-field py-2 text-xs">
                         <input v-model.number="exchangeRates.fei" type="number" step="0.0001" class="input-field py-2 text-xs">
-                        <input v-model.number="exchangeRates.yi" type="number" step="0.0001" class="input-field py-2 text-xs">
+                        <input v-model.number="exchangeRates.yee" type="number" step="0.0001" class="input-field py-2 text-xs">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-2">
