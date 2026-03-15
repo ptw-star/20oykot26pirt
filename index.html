@@ -144,11 +144,11 @@
                 <button @click="searchMap('景點')" class="p-4 bg-white rounded-2xl flex flex-row items-center justify-center gap-2 shadow-sm active:bg-gray-50"><i data-lucide="camera" class="text-secondary"></i><span class="font-bold text-sm">睇景點</span></button>
             </div>
             <div class="grid grid-cols-3 gap-2">
-                <button @click="searchMap('東京都豊島区池袋2-20-1')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="bed" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-sm truncate w-full text-center">池袋之家</span>
+                <button @click="searchMap('東京都豊島区池袋2-20-1')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="bed" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-[11.5px] truncate w-full text-center">池袋之家</span>
                 </button>
-                <button @click="searchMap('山梨県南都留郡富士河口湖町浅川10')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="home" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-sm truncate w-full text-center">富士山Ubuya</span>
+                <button @click="searchMap('山梨県南都留郡富士河口湖町浅川10')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="home" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-[11.5px] truncate w-full text-center">富士山Ubuya</span>
                 </button>
-                <button @click="searchMap('東京都豊島区南池袋1-20-8')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="building-2" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-sm truncate w-full text-center">Del池袋東口</span>
+                <button @click="searchMap('東京都豊島区南池袋1-20-8')" class="p-4 bg-white rounded-2xl flex flex-col items-center gap-1 shadow-sm active:bg-gray-50"><i data-lucide="building-2" class="w-5 h-5 text-[#607D8B]"></i><span class="font-bold text-[11.5px] truncate w-full text-center">Del池袋東口</span>
                 </button>
             </div>
         </section>
@@ -215,7 +215,7 @@
                     <div class="grid grid-cols-4 gap-2">
                         <button v-for="p in ['公數', '爸媽', '妃', '而']" 
                                 @click="newExpense.person = p"
-                                :class="newExpense.person === p ? 'bg-sage text-white shadow-sm' : 'bg-gray-100 text-gray-400'"
+                                :class="newExpense.person === p ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-400'"
                                 class="py-2 rounded-lg text-xs font-bold transition-all">
                             {{ p }}
                         </button>
