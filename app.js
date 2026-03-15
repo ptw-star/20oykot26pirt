@@ -27,10 +27,9 @@ setup() {
     const shopCategories = ['3COINS', 'LOFT', '藥妝', '百貨公司', '便利店', '超市', '其他'];
     const shopFilter = ref('all');
     
-    // 初始化時從 localStorage 讀取
     const githubConfig = ref(JSON.parse(localStorage.getItem('github_config')) || { owner: '', repo: '', token: '' });
     const exchangeRates = ref(JSON.parse(localStorage.getItem('exchange_rates')) || {
-        baMa: 0.052, fei: 0.052, yi: 0.052
+        baMa: 0.05511, fei: 0.0554338, yi: 0.051558
     });
 
     const scheduleData = ref({});
@@ -49,7 +48,13 @@ setup() {
         { name: '妃', colorClass: 'bg-[#E9EBE2]' }, { name: '而', colorClass: 'bg-[#EFE2DE]' }
     ];
 
-    // --- 梅花間竹主題邏輯 ---
+    const scrollToDate = (d) => { 
+        selectedDate.value = d; 
+        const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); 
+        const el = document.getElementById(id); 
+        if(el) window.scrollTo({ top: el.offsetTop - 145, behavior: 'smooth' }); 
+    };
+
     const getDateTheme = (date) => {
         const idx = dateRange.indexOf(date);
         const cycle = idx % 3;
@@ -228,10 +233,22 @@ setup() {
         return stats;
     };
 
-    onMounted(async () => { await fetchFromGitHub(); lucide.createIcons(); });
+    onMounted(async () => { 
+        await fetchFromGitHub(); 
+        lucide.createIcons(); 
+        const now = new Date();
+        const todayStr = `${now.getDate()}/${now.getMonth() + 1}`;
+        const targetDate = dateRange.includes(todayStr) ? todayStr : '29/3';
+        nextTick(() => {
+            setTimeout(() => {
+                // 初始化預設是在行程頁，故執行跳轉
+                scrollToDate(targetDate);
+            }, 600); // 給予足夠時間讓 GitHub 資料完全載入並顯示
+        });
+    });
+
     watch(currentTab, () => { nextTick(lucide.createIcons); selectedDate.value = null; });
 
-    // --- 關鍵修改：增加對 githubConfig 和 exchangeRates 的監聽並寫入 LocalStorage ---
     watch(githubConfig, (newVal) => {
         localStorage.setItem('github_config', JSON.stringify(newVal));
     }, { deep: true });
@@ -256,7 +273,7 @@ setup() {
         totalEstDiningPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '飲食').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
         totalEstAttractionsPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '景點').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
         totalEstAccommodationPersonal: computed(() => Object.values(scheduleData.value).flat().filter(i => i.category === '住宿').reduce((s, i) => s + (Number(i.estPersonal)||0) + ((Number(i.estShared)||0)/4), 0)),
-        scrollToDate: (d) => { selectedDate.value = d; const id = d === 'summary' ? 'expense-summary' : (currentTab.value === 'expense' ? 'expense-date-' : 'date-') + d.replace('/', '-'); const el = document.getElementById(id); if(el) window.scrollTo({ top: el.offsetTop - 145, behavior: 'smooth' }); },
+        scrollToDate,
         getScheduleByDate: (d) => scheduleData.value[d] || [],
         getDayTotal: (d) => expenseList.value.filter(i => i.date === d && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0),
         getPersonStats, getDayPersonTotal: (date, person) => expenseList.value.filter(i => i.date === date && i.person === person && i.type === 'expense').reduce((s, i) => s + Number(i.amount), 0),
