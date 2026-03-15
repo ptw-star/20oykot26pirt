@@ -40,7 +40,7 @@ setup() {
     const editingScheduleId = ref(null);
     const newShopItem = ref({ name: '', store: '', category: '其他', image: null });
     const editingShopId = ref(null);
-    const newExpense = ref({ type: 'expense', date: '29/3', person: '公數', method: '現金', title: '', amount: null });
+    const newExpense = ref({ type: 'expense', date: 'targetDate', person: '公數', method: '現金', title: '', amount: null });
     const editingExpenseId = ref(null);
 
     const peopleConfigs = [
