@@ -187,6 +187,8 @@
                         <span class="ml-1 text-[10px] text-gray-400 uppercase font-bold">日期</span>
                         <select v-model="newExpense.date" class="input-field py-2 text-xs">
                             <option v-for="date in dateRange" :value="date">{{ date }}</option>
+                        </select>
+                    </div>
                     <div class="flex flex-col gap-1">
                         <span class="ml-1 text-[10px] text-gray-400 uppercase font-bold">支付方式</span>
                         <select v-model="newExpense.method" class="input-field pt-5 text-xs">
@@ -338,16 +340,16 @@
                     <span class="text-[10px] text-gray-400 font-bold uppercase">匯率</span>
                     <div class="grid grid-cols-3 gap-2">
                         <div class="flex flex-col gap-1">
-                            <label class="text-xs text-gray-600 font-medium">爸媽</label>
-                            <input v-model.number="exchangeRates.baMa" type="number" step="0.0001" class="input-field py-2 text-xs">
+                            <label class="ml-1 text-xs text-accent font-medium">爸媽</label>
+                            <input v-model.number="exchangeRates.baMa" type="number" step="0.0001" class="input-field py-2 text-accent/50 text-xs">
                         </div>
                         <div class="flex flex-col gap-1">
-                            <label class="text-xs text-gray-600 font-medium">妃</label>
-                            <input v-model.number="exchangeRates.fei" type="number" step="0.0001" class="input-field py-2 text-xs">
+                            <label class="ml-1 text-xs text-sage font-medium">妃</label>
+                            <input v-model.number="exchangeRates.fei" type="number" step="0.0001" class="input-field py-2 text-sage/50 text-xs">
                         </div>
                         <div class="flex flex-col gap-1">
-                            <label class="text-xs text-gray-600 font-medium">而</label>
-                            <input v-model.number="exchangeRates.yee" type="number" step="0.0001" class="input-field py-2 text-xs">
+                            <label class="ml-1 text-xs text-secondary font-medium">而</label>
+                            <input v-model.number="exchangeRates.yee" type="number" step="0.0001" class="input-field py-2 text-secondary/50 text-xs">
                         </div>
                     </div>
                 </div>
