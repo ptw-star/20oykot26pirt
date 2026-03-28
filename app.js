@@ -29,7 +29,7 @@ setup() {
     
     const githubConfig = ref(JSON.parse(localStorage.getItem('github_config')) || { owner: '', repo: '', token: '' });
     const exchangeRates = ref(JSON.parse(localStorage.getItem('exchange_rates')) || {
-        baMa: 0.05511, fei: 0.0554338, yee: 0.051558
+        baMa: 0.05511, fei: 0.0541019, yee: 0.051558
     });
 
     const scheduleData = ref({});
